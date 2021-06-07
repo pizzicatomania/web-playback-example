@@ -30,8 +30,9 @@
         <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
         <div>
           <button id="play-button">play</button>
-          <button id="play-button">stop</button>
+          <button id="pause-button">stop</button>
         </div>
+        <div id='device-id'></div>
       </div>
     </div>
 
@@ -149,6 +150,7 @@
         window.onSpotifyWebPlaybackSDKReady = () => {
 
           const token = document.getElementById('access-token').innerHTML;
+          
           const player = new Spotify.Player({
             name: 'Web Playback SDK Quick Start Player',
             getOAuthToken: cb => { cb(token); }
@@ -167,6 +169,7 @@
           // Ready
           player.addListener('ready', ({ device_id }) => {
             console.log('Ready with Device ID', device_id);
+            document.getElementById('device-id').innerHTML = device_id
             const play = ({
               spotify_uri,
               playerInstance: {
@@ -177,7 +180,8 @@
               }
             }) => {
               getOAuthToken(access_token => {
-                fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
+                const id = document.getElementById('device-id').innerHTML
+                fetch(`https://api.spotify.com/v1/me/player/play?device_id=`+ id, {
                   method: 'PUT',
                   body: JSON.stringify({ uris: [spotify_uri] }),
                   headers: {
@@ -187,13 +191,40 @@
                 });
               });
             };
+
+            const pause = ({
+              playerInstance: {
+                _options: {
+                  getOAuthToken,
+                  id
+                }
+              }
+            }) => {
+              getOAuthToken(access_token => {
+                const id = document.getElementById('device-id').innerHTML
+                fetch(`	https://api.spotify.com/v1/me/player/pause`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${access_token}`
+                  },
+                });
+              });
+            };
             
-            play({
-              playerInstance: player,
-              spotify_uri: 'spotify:track:7xGfFoTpQ2E7fRF5lN10tr',
+            document.getElementById('play-button').addEventListener('click', function() {
+              play({
+                playerInstance: player,
+                spotify_uri: 'spotify:track:3adQpYatYOsgAKr853t4mZ',
+              });
             });
-            
-            
+
+            document.getElementById('pause-button').addEventListener('click', function() {
+              pause({
+                playerInstance: player
+              });
+            });
+
           });
 
           // Not Ready
@@ -204,6 +235,7 @@
           // Connect to the player!
           player.connect();
         };
+
       </script>
     </div>
   </body>
